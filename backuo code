@@ -1,0 +1,75 @@
+#default leocation = 0
+locations = {'Gauteng':'2747', 'Western Cape':'16149', 'KwaZulu-Natal':'13131',\
+             'Eastern Cape':'2', 'Free State':'1782', 'Mpumalanga':'14867',\
+             'Limpopo':'14594', 'North West':'15372', 'Northern Cape':'15837',\
+             'International':'1000001', 'Working From Home':'100000'} 
+             
+#####################################################################            
+def get_url(job, location = 0):
+  '''This function helps to set up the search url'''
+  
+  try:
+    if location != 0:                    #encode the location
+      location = locations[location]
+    gen_url = "https://www.careerjunction.co.za/jobs/results?keywords={}&autosuggestEndpoint=%2fautosuggest&location={}&category=&btnSubmit=+&page=1"
+    search_url = gen_url.format(job, location)
+    
+    return search_url
+  except:
+    return 'revise location'
+#####################################################    
+gen_url = "https://www.careerjunction.co.za/jobs/results?keywords=data&autosuggestEndpoint=%2fautosuggest&location=2747&category=&btnSubmit=+"
+url1 = get_url('data', 'Limpopo')
+resp = requests.get(gen_url)
+print(resp, resp.reason)
+print(gen_url)
+print(url1)
+
+######################################
+pasta = BeautifulSoup(resp.content)
+jobs = pasta.find('div', class_="two-thirds")
+j_cards = jobs.find_all('div', class_="job-result")
+#j_cards.pop(5)
+print(len(j_cards))
+#j_cards
+########################################
+
+li = []
+for j_card in j_cards:
+  j_today = date.today()
+  a_job = {}
+  a_job['Job Title'] = (j_card.find('h2').text.strip())
+  a_job['Company'] = (j_card.find('h3').text.strip())
+  a_job['Location'] = (j_card.find('li', class_="location").text.strip())
+  a_job['Job Type'] = (j_card.find('li', class_="position").text.strip())
+  a_job['Salary'] = (j_card.find('li', class_="salary").text.strip('R').strip())
+  a_job['Posting date'] = (j_card.find('li', class_="updated-time").text.strip('Posted').strip())
+  j_expiry = j_card.find('li', class_="expires").text.split()[2]
+  if j_expiry != 'today':
+    ini_exp = j_today + timedelta(days=int(j_expiry))
+    a_job['Expiry date'] = ini_exp.strftime('%d %b %Y')
+  else:
+    a_job['Expiry date'] = j_today.strftime('%d %b %Y')
+  #a_job['Job URL'] = (j_card.find('h2').text.strip())
+  #a_job['j_title'] = (j_card.find('h2').text.strip())
+
+  li.append(a_job)
+
+#two-way step in accessing an embedded feature, find outer tag and assign it
+#then use asigned_varaible.attrs['some_tag'] to locate the embedded feature
+#eg -> var = j_card.find('h2') followed by feature = var.attrs['a'] 
+
+#convert final list of dictionaries to a pandas dataframe then use to_csv after
+#df = pd.DataFrame(jobs) followed by df.to_csv('file_name.csv')
+
+len(li)
+li[3]
+####################################################################
+
+#gen_url will change to url when get_url function is finally up and running
+tsamaea = jobs.find('ul', {'id':'pagination'})
+gen_url2 = tsamaea.find('a', class_="alt")
+semate = gen_url[0]
+print(gen_url2)
+print(semate)
+########################################
